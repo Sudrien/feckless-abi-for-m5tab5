@@ -1,0 +1,28 @@
+version: "0.1.0"
+description: >-
+  The ABI between a Tab5 launcher and the apps it loads with esp_elf:
+  the feckless libraries, pinned, and the list of symbols an app's ELF
+  may take from the launcher.
+url: https://github.com/Sudrien/feckless-abi-for-m5tab5
+license: MIT
+
+dependencies:
+  idf:
+    version: ">=5.4.2"
+
+  # The ABI is these two at these tags. Moving either tag is a new ABI
+  # version (README.md).
+  feckless_drivers:
+    git: https://github.com/Sudrien/feckless-drivers-for-m5tab5.git
+    version: "v0.5.9"
+  feckless_graphics_handler:
+    git: https://github.com/Sudrien/feckless-graphics-handler-for-m5tab5.git
+    version: "v0.2.7"
+
+  # feckless_drivers requires the USB audio class driver by name and
+  # does not fetch it. The host links it like the rest.
+  espressif/usb_host_uac: "1.5.0"
+
+  # esp_elf: the host loads with it, and an app's ELF is linked by its
+  # project_elf().
+  espressif/elf_loader: "2.*"
