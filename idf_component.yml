@@ -1,4 +1,4 @@
-version: "0.1.0"
+version: "0.2.0"
 description: >-
   The ABI between a Tab5 launcher and the apps it loads with esp_elf:
   the feckless libraries, pinned, and the list of symbols an app's ELF
@@ -10,14 +10,16 @@ dependencies:
   idf:
     version: ">=5.4.2"
 
-  # The ABI is these two at these tags. Moving either tag is a new ABI
-  # version (README.md).
+  # The ABI is these two at these tags (README.md, "Versions"). v0.5.10
+  # and v0.2.8: tab5io, lcd, gfx, touch and usbhost initialise again
+  # without error, and a USB class registered late is installed -- an
+  # app runs on the board its launcher brought up.
   feckless_drivers:
     git: https://github.com/Sudrien/feckless-drivers-for-m5tab5.git
-    version: "v0.5.9"
+    version: "v0.5.10"
   feckless_graphics_handler:
     git: https://github.com/Sudrien/feckless-graphics-handler-for-m5tab5.git
-    version: "v0.2.7"
+    version: "v0.2.8"
 
   # feckless_drivers requires the USB audio class driver by name and
   # does not fetch it. The host links it like the rest.

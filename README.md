@@ -16,7 +16,7 @@ the log, libc, libm and libgcc for the launcher to supply.
 
 ## Version 1
 
-- **feckless_drivers v0.5.9 and feckless_graphics_handler v0.2.7**,
+- **feckless_drivers v0.5.10 and feckless_graphics_handler v0.2.8**,
   their whole public API: every global their public headers declare.
   That is 110 functions and the font tables.
 - **A fixed set from ESP-IDF and the toolchain**: FreeRTOS tasks,
@@ -26,9 +26,24 @@ the log, libc, libm and libgcc for the launcher to supply.
 
 Nothing else. File I/O and feckless-storage-handler are not in v1.
 
-**The board is the app's.** A launcher starts an app on a board nothing
-has initialised, and the app calls `tab5io_init()`, `lcd_init()` and the
-rest, as in a firmware of its own. None of them may be called twice.
+**The board may already be up.** A launcher runs an app on the board it
+was using, from its own task: no restart. The app initialises the board
+as a firmware of its own would, and the board's state is what that
+leaves:
+
+- `tab5io_init()`, `lcd_init()`, `gfx_init()`, `touch_init()` and
+  `usbhost_init()` return `ESP_OK` when called again. The panel is kept,
+  and gfx and touch go back to upright, full brightness and a black
+  screen. `usbhost_start()` always could be called again.
+- A USB class registered once the port is up, such as `uac_init()`, is
+  installed, and the port's power is cycled so that devices already
+  attached enumerate again and meet it. The launcher's own classes, mass
+  storage for one, see their devices drop and return.
+- `audio_out_init()`, `uac_init()`, `hid_init()`, `battery_init()` and
+  `rtc8130_init()` are the app's. A launcher does not call them.
+
+What else the launcher left running, a console task or a mounted card,
+keeps running.
 
 ## An app
 
@@ -37,7 +52,7 @@ rest, as in a firmware of its own. None of them may be called twice.
 dependencies:
   feckless_abi:
     git: https://github.com/Sudrien/feckless-abi-for-m5tab5.git
-    version: "v0.1.0"
+    version: "v0.2.0"
 ```
 
 `feckless_abi` goes in main's `REQUIRES`, and `feckless_abi_elf()` goes
@@ -77,21 +92,35 @@ component:
 ```c
 #include "feckless_abi.h"
 
-int err = feckless_abi_run(image, size);   /* runs app_main(); returns only on failure */
+int err = feckless_abi_run(image, size);   /* runs the app's app_main() on this task */
 ```
 
 `image` may be in RAM or memory-mapped flash, and must stay there while
-the app runs. esp_elf loads the app into PSRAM, so the launcher's
-sdkconfig needs:
+the app runs. The app runs on the calling task, so give that task the
+stack an app expects of `app_main()`: `CONFIG_ESP_MAIN_TASK_STACK_SIZE`
+if it is the main task. A failure to load returns with nothing of the
+app run, so the launcher can carry on. A return of 0 means the app's
+`app_main()` returned, leaving its own tasks running; the launcher must
+leave the screen alone from then on (`vTaskDelete(NULL)`). See
+"Configuration" for the sdkconfig.
 
-```
-CONFIG_SPIRAM=y
-CONFIG_ELF_LOADER_LOAD_PSRAM=y
-CONFIG_ESP_SYSTEM_MEMPROT_FEATURE=n
-```
+## Configuration
 
-An app's sdkconfig should match its launcher's: struct layouts and
-inline functions in the headers depend on it.
+An app is compiled with its own sdkconfig and runs under its launcher's,
+so the two must agree where the headers depend on it. The component
+checks both builds, and fails on:
+
+- `CONFIG_FREERTOS_HZ=1000`. Every `pdMS_TO_TICKS()` in an app is
+  compiled with it.
+- `CONFIG_SPIRAM=y`, `CONFIG_ELF_LOADER_LOAD_PSRAM=y` and
+  `CONFIG_ESP_SYSTEM_MEMPROT_FEATURE=n`. esp_elf runs apps from PSRAM.
+
+It warns without:
+
+- `CONFIG_CACHE_L2_CACHE_256KB=y` (and `..._LINE_128B=y`). The app's code
+  is in PSRAM.
+- `CONFIG_UAC_FREQ_NUM_MAX=8`, on the launcher. This one is compiled into
+  the launcher's USB audio driver, not the app.
 
 ## Versions
 
@@ -105,9 +134,11 @@ not find. It fails before any of the app runs.
   the shorter list still load; a new app that uses the name needs a
   launcher that has it. That is a minor release.
 - **Removing** a name, or changing what one means, is a new version:
-  a signature, a struct, or a feckless tag moved in `idf_component.yml`.
-  Bump `FECKLESS_ABI_VERSION` and `FECKLESS_ABI_SYMBOL` together, in a
-  major release.
+  a signature, or a struct. A feckless tag moved in `idf_component.yml`
+  is a new version if it changes either. A tag that only changes
+  behaviour is not; v0.1.0's v0.5.9/v0.2.7 to v0.5.10/v0.2.8, whose
+  inits may be called twice, is not. Bump `FECKLESS_ABI_VERSION` and
+  `FECKLESS_ABI_SYMBOL` together, in a major release.
 
 After moving a tag, `tools/feckless_exports.py <build> <managed_components>`
 prints the libraries' public API afresh, for the feckless section of

@@ -21,6 +21,28 @@ idf_component_register(
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+    # The configuration both sides must share (README.md, "Configuration").
+    # An app compiles the launcher's tick rate into every pdMS_TO_TICKS(),
+    # and esp_elf can only run it from PSRAM; these fail the build, on
+    # either side, rather than the board.
+    if(NOT CONFIG_FREERTOS_HZ EQUAL 1000)
+        message(FATAL_ERROR "feckless_abi: CONFIG_FREERTOS_HZ must be 1000 (is ${CONFIG_FREERTOS_HZ})")
+    endif()
+    if(NOT CONFIG_SPIRAM OR NOT CONFIG_ELF_LOADER_LOAD_PSRAM)
+        message(FATAL_ERROR "feckless_abi: needs CONFIG_SPIRAM=y and CONFIG_ELF_LOADER_LOAD_PSRAM=y")
+    endif()
+    if(CONFIG_ESP_SYSTEM_MEMPROT_FEATURE)
+        message(FATAL_ERROR "feckless_abi: needs CONFIG_ESP_SYSTEM_MEMPROT_FEATURE=n")
+    endif()
+    # Not fatal: an app runs without them, worse.
+    if(NOT CONFIG_CACHE_L2_CACHE_256KB)
+        message(WARNING "feckless_abi: CONFIG_CACHE_L2_CACHE_256KB=y is recommended: an app runs from PSRAM")
+    endif()
+    if(DEFINED CONFIG_UAC_FREQ_NUM_MAX AND CONFIG_UAC_FREQ_NUM_MAX LESS 8)
+        message(WARNING "feckless_abi: CONFIG_UAC_FREQ_NUM_MAX=8 is recommended: "
+                "with 4, a microphone that lists five rates loses its fifth")
+    endif()
+
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_exports}")
     file(STRINGS "${_exports}" _syms REGEX "^[A-Za-z_][A-Za-z0-9_]*$")
     # As elf_loader's tool/symbols.py writes it: only the address

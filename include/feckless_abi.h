@@ -8,10 +8,12 @@
  * libm and libgcc left undefined. exports.txt is the list it may leave
  * undefined; the launcher hands esp_elf a table of the same list.
  *
- * The board is the app's. A launcher starts an app on a board nothing
- * has initialised -- tab5io_init(), lcd_init() and the rest are the
- * app's to call, as in a firmware of its own, and none of them may be
- * called twice.
+ * An app initialises the board as a firmware of its own would, and may
+ * find it already up: a launcher runs it on the board it was using.
+ * tab5io_init(), lcd_init(), gfx_init(), touch_init() and usbhost_init()
+ * return ESP_OK again, a USB class registered late is installed, and
+ * the rest -- audio_out_init(), uac_init(), hid_init(), battery_init(),
+ * rtc8130_init() -- are the app's: a launcher does not call them.
  */
 #pragma once
 
@@ -42,8 +44,10 @@ static inline void feckless_abi_require(void)
  * that an app need not include esp_elf.h: it is an esp_elf_symbol_table_t. */
 extern const void *const feckless_abi_table;
 
-/* Relocate an app's ELF image and call its app_main(). The image may be
- * in flash (mmapped) or RAM, and must stay there while the app runs.
- * Apps do not return; if one does, so does this, with 0. If the image
- * will not load, returns esp_elf's negative errno. */
+/* Relocate an app's ELF image and call its app_main(), on the caller's
+ * task. The image may be in flash (mmapped) or RAM, and must stay there
+ * while the app runs. If the image will not load, returns esp_elf's
+ * negative errno, and nothing of the app has run: the board is as it
+ * was. Otherwise it returns only if app_main() does -- 0 -- and then the
+ * app's own tasks have the board: the launcher must not draw again. */
 int feckless_abi_run(const uint8_t *image, size_t size);
