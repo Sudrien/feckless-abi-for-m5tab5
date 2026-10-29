@@ -16,7 +16,7 @@ the log, libc, libm and libgcc for the launcher to supply.
 
 ## Version 1
 
-- **feckless_drivers v0.5.10 and feckless_graphics_handler v0.2.8**,
+- **feckless_drivers v0.5.10 and feckless_graphics_handler v0.2.9**,
   their whole public API: every global their public headers declare.
   That is 110 functions and the font tables.
 - **A fixed set from ESP-IDF and the toolchain**: FreeRTOS tasks,
@@ -52,7 +52,7 @@ keeps running.
 dependencies:
   feckless_abi:
     git: https://github.com/Sudrien/feckless-abi-for-m5tab5.git
-    version: "v0.2.0"
+    version: "v0.2.1"
 ```
 
 `feckless_abi` goes in main's `REQUIRES`, and `feckless_abi_elf()` goes
@@ -136,7 +136,7 @@ not find. It fails before any of the app runs.
 - **Removing** a name, or changing what one means, is a new version:
   a signature, or a struct. A feckless tag moved in `idf_component.yml`
   is a new version if it changes either. A tag that only changes
-  behaviour is not; v0.1.0's v0.5.9/v0.2.7 to v0.5.10/v0.2.8, whose
+  behaviour is not; v0.1.0's v0.5.9/v0.2.7 to v0.5.10/v0.2.9, whose
   inits may be called twice, is not. Bump `FECKLESS_ABI_VERSION` and
   `FECKLESS_ABI_SYMBOL` together, in a major release.
 

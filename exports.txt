@@ -10,7 +10,7 @@
 # feckless tag moved in idf_component.yml -- is a new version: bump
 # FECKLESS_ABI_VERSION and FECKLESS_ABI_SYMBOL together.
 
-# ---- feckless_drivers v0.5.10, feckless_graphics_handler v0.2.8 --------
+# ---- feckless_drivers v0.5.10, feckless_graphics_handler v0.2.9 --------
 # Their whole public API: tools/feckless_exports.py.
 arabixel_count
 arabixel_find
