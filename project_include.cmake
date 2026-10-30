@@ -23,6 +23,11 @@ macro(feckless_abi_elf _name)
     # project_elf() links with ${ELF_LIBS} on the command line, which is
     # the one way in.
     list(APPEND ELF_LIBS "-Wl,-Bsymbolic")
+    # The app's own esp_app_desc_t, linked in: with -Bsymbolic its
+    # esp_app_get_description() returns the app's version, name and build
+    # time. Taken from the launcher, as it was, it described the launcher.
+    # The launcher still exports it, for apps built before this.
+    list(APPEND ELF_COMPONENTS esp_app_format)
     project_elf(${_name})
     string(REPLACE "-gcc" "-readelf" _fa_readelf "${CMAKE_C_COMPILER}")
     add_custom_command(TARGET elf POST_BUILD

@@ -52,7 +52,7 @@ keeps running.
 dependencies:
   feckless_abi:
     git: https://github.com/Sudrien/feckless-abi-for-m5tab5.git
-    version: "v0.2.4"
+    version: "v0.2.5"
 ```
 
 `feckless_abi` goes in main's `REQUIRES`, and `feckless_abi_elf()` goes
@@ -74,6 +74,9 @@ void app_main(void)
     feckless_abi_require();
     ...
 ```
+
+The ELF links IDF's `esp_app_format` too, so `esp_app_get_description()`
+in an app describes the app: its project name, version and build time.
 
 The build checks the ELF, and deletes it if the check fails, so a failed
 build leaves no ELF to copy. It fails on any undefined symbol that is not
