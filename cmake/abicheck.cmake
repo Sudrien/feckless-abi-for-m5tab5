@@ -39,6 +39,21 @@ foreach(_l IN LISTS _lines)
 endforeach()
 list(REMOVE_DUPLICATES _need)
 
+# And every symbol a relocation names. elf_loader 2.0.0 looks each one up
+# in the launcher's table, even one the ELF defines itself, so a defined
+# global reached through the PLT or GOT fails on the board as surely as
+# an import outside the ABI. feckless_abi_elf() links with -Bsymbolic so
+# there are none; this is what says so.
+execute_process(COMMAND "${READELF}" -r --wide "${ELF}"
+                OUTPUT_VARIABLE _rout ERROR_QUIET)
+string(REPLACE "\n" ";" _rlines "${_rout}")
+foreach(_l IN LISTS _rlines)
+    if(_l MATCHES "R_[A-Z0-9_]+ +[0-9a-f]+ +([A-Za-z_][A-Za-z0-9_]*) [+-]")
+        list(APPEND _need "${CMAKE_MATCH_1}")
+    endif()
+endforeach()
+list(REMOVE_DUPLICATES _need)
+
 file(STRINGS "${EXPORTS}" _have REGEX "^[A-Za-z_][A-Za-z0-9_]*$")
 
 set(_missing "")

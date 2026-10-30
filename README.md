@@ -52,7 +52,7 @@ keeps running.
 dependencies:
   feckless_abi:
     git: https://github.com/Sudrien/feckless-abi-for-m5tab5.git
-    version: "v0.2.3"
+    version: "v0.2.4"
 ```
 
 `feckless_abi` goes in main's `REQUIRES`, and `feckless_abi_elf()` goes

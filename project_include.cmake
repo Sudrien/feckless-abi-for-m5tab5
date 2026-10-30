@@ -15,6 +15,14 @@ set(FECKLESS_ABI_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 macro(feckless_abi_elf _name)
     include(elf_loader)
+    # -Bsymbolic: the ELF's references to what it defines itself bind
+    # inside it. Without it a global it defines -- esp-dsp's assembly
+    # entry points, default visibility -- is reached through the PLT by
+    # name, and elf_loader 2.0.0 looks every named relocation up in the
+    # launcher's table only: "Can't find common dsps_fft2r_fc32_arp4_".
+    # project_elf() links with ${ELF_LIBS} on the command line, which is
+    # the one way in.
+    list(APPEND ELF_LIBS "-Wl,-Bsymbolic")
     project_elf(${_name})
     string(REPLACE "-gcc" "-readelf" _fa_readelf "${CMAKE_C_COMPILER}")
     add_custom_command(TARGET elf POST_BUILD
