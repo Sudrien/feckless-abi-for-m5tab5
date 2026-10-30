@@ -9,6 +9,10 @@
 # entry for it and esp_elf_relocate() fails on the board. And the ELF
 # must refer to this version's FECKLESS_ABI_SYMBOL, or a launcher of
 # another version would load it.
+#
+# A failing ELF is deleted: the check runs after the link, so without
+# that the ELF of a failed build is left beside the log, and copies as
+# well as a good one -- then fails on the board instead.
 
 cmake_policy(SET CMP0057 NEW)   # IN_LIST, in script mode
 
@@ -21,13 +25,16 @@ string(REGEX REPLACE "^#define FECKLESS_ABI_SYMBOL +([A-Za-z0-9_]+).*$" "\\1" _v
 execute_process(COMMAND "${READELF}" -s --wide "${ELF}"
                 OUTPUT_VARIABLE _out ERROR_QUIET)
 if(NOT _out MATCHES "Symbol table")
+    file(REMOVE "${ELF}")
     message(FATAL_ERROR "feckless_abi: no symbol table from ${READELF} in ${ELF}")
 endif()
 string(REPLACE "\n" ";" _lines "${_out}")
 set(_need "")
 foreach(_l IN LISTS _lines)
-    if(_l MATCHES "GLOBAL +DEFAULT +UND +([A-Za-z_][A-Za-z0-9_]*)$")
-        list(APPEND _need "${CMAKE_MATCH_1}")
+    # WEAK too: esp_elf resolves a weak reference like any other, and
+    # fails on one it cannot.
+    if(_l MATCHES "(GLOBAL|WEAK) +DEFAULT +UND +([A-Za-z_][A-Za-z0-9_]*)$")
+        list(APPEND _need "${CMAKE_MATCH_2}")
     endif()
 endforeach()
 list(REMOVE_DUPLICATES _need)
@@ -47,11 +54,13 @@ endforeach()
 if(_missing)
     list(SORT _missing)
     string(REPLACE ";" "\n  " _missing "${_missing}")
+    file(REMOVE "${ELF}")
     message(FATAL_ERROR "feckless_abi: ${ELF} needs symbols outside the ABI "
             "(${_version_sym}). Link them into the ELF (ELF_COMPONENTS), or "
             "they are a new ABI version:\n  ${_missing}")
 endif()
 if(NOT _versioned)
+    file(REMOVE "${ELF}")
     message(FATAL_ERROR "feckless_abi: ${ELF} does not refer to ${_version_sym}. "
             "Call feckless_abi_require() first thing in app_main().")
 endif()

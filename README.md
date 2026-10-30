@@ -52,7 +52,7 @@ keeps running.
 dependencies:
   feckless_abi:
     git: https://github.com/Sudrien/feckless-abi-for-m5tab5.git
-    version: "v0.2.2"
+    version: "v0.2.3"
 ```
 
 `feckless_abi` goes in main's `REQUIRES`, and `feckless_abi_elf()` goes
@@ -75,7 +75,8 @@ void app_main(void)
     ...
 ```
 
-The build checks the ELF. It fails on any undefined symbol that is not
+The build checks the ELF, and deletes it if the check fails, so a failed
+build leaves no ELF to copy. It fails on any undefined symbol that is not
 in `exports.txt`: link that one into the ELF with `ELF_COMPONENTS`, or
 it needs a new ABI version. It also fails without
 `feckless_abi_require()`.
