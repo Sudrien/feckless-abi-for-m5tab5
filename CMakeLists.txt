@@ -57,7 +57,10 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     endforeach()
     string(APPEND _c "#pragma GCC diagnostic pop\n\n")
     string(APPEND _c "const struct esp_elfsym g_feckless_abi_elfsyms[] = {\n")
-    string(APPEND _c "    ESP_ELFSYM_EXPORT(FECKLESS_ABI_SYMBOL),\n")
+    # Not ESP_ELFSYM_EXPORT(FECKLESS_ABI_SYMBOL): it stringizes its
+    # argument unexpanded, and registered the version as
+    # "FECKLESS_ABI_SYMBOL", which no app asks for.
+    string(APPEND _c "    { FECKLESS_ABI_NAME, (const void *)&FECKLESS_ABI_SYMBOL },\n")
     foreach(_s IN LISTS _syms)
         string(APPEND _c "    ESP_ELFSYM_EXPORT(${_s}),\n")
     endforeach()

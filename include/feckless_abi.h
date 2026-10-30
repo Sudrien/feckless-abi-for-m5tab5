@@ -30,6 +30,12 @@
 
 extern const uint32_t FECKLESS_ABI_SYMBOL;
 
+/* Its name as a string, "feckless_abi_v1": what the launcher's table
+ * registers it under. Two steps, so the macro is expanded first. */
+#define FECKLESS_ABI_STR_(x) #x
+#define FECKLESS_ABI_STR(x)  FECKLESS_ABI_STR_(x)
+#define FECKLESS_ABI_NAME    FECKLESS_ABI_STR(FECKLESS_ABI_SYMBOL)
+
 /* An app calls this first thing in app_main(). It does nothing at run
  * time; it is the reference that ties the ELF to the version. The ELF
  * build fails without it. */
